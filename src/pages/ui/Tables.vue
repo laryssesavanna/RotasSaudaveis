@@ -64,10 +64,13 @@
 </template>
 
 <script>
+import Sensores from '@/service/sensores';
+// import Users from '@/service/users';
 import { Items as Users } from '@/api/user';
 export default {
   data () {
     return {
+      sensores: [],
       search: '',
       complex: {
         selected: [],
@@ -97,6 +100,14 @@ export default {
       }
 
     };
+  },
+  mounted () {
+    /* Sensores.listAllEntities().then(response => {
+      console.log('Sensores: ' + response.data);
+    });
+    Users.listUsers().then(response => {
+      console.log('Usuários: ' + response.data);
+    }); */
   }
 };
 </script>
