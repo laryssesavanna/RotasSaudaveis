@@ -1,5 +1,5 @@
 <template>
-  <l-map ref="map" :zoom="12" :center="initialLocation" :options="mapOptions"
+  <l-map ref="map" :zoom="12" :center="initialLocation" :options="mapOptions" :attribution="attribution"
     style="position: fixed !important; padding-top: 64px">
     <l-tilelayer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tilelayer>
     <l-control-zoom :position="zoomPosition"/>
@@ -20,8 +20,8 @@
 </style>
 
 <script type="text/javascript">
+
 import L from 'leaflet';
-import Vue from 'vue';
 import * as Vue2Leaflet from 'vue2-leaflet';
 import { listByType } from '@/service/sensores';
 import { http } from '@/service/configorion';
@@ -40,8 +40,7 @@ export default {
     'l-map': Vue2Leaflet.LMap,
     'l-tilelayer': Vue2Leaflet.LTileLayer,
     'l-popup': Vue2Leaflet.LPopup,
-    'l-control-zoom': Vue2Leaflet.LControlZoom,
-    'l-marker': Vue2Leaflet.LMarker
+    'l-control-zoom': Vue2Leaflet.LControlZoom
   },
   data () {
     return {

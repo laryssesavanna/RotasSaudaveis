@@ -58,16 +58,17 @@ export default [
     )
   },
   {
-    path: '/',
-    meta: { },
-    name: 'Root',
-    redirect: {
-      name: 'Dashboard'
-    }
+    path: '/callback',
+    meta: { public: false },
+    component: () => import(
+      /* webpackChunkName: "routes" */
+      /* webpackMode: "laz  y-once" */
+      `@/pages/Dashboard.vue`
+    )
   },
   {
     path: '/dashboard',
-    meta: { breadcrumb: true },
+    meta: { breadcrumb: true, public: false },
     name: 'Dashboard',
     component: () => import(
       /* webpackChunkName: "routes" */
@@ -100,7 +101,7 @@ export default [
   {
     path: '/chat',
     meta: {
-      public: true,
+      public: false,
     },
     name: 'Chat',
     component: () => import(
@@ -114,7 +115,7 @@ export default [
       {
         path: '/chat/messaging/:uuid?',
         meta: {
-          public: true,
+          public: false,
         },
         name: 'ChatMessaging',
         props: true,
@@ -129,7 +130,7 @@ export default [
       {
         path: '/chat/contact/:uuid?',
         meta: {
-          public: true,
+          public: false,
         },
         name: 'ChatContact',
         components: {
@@ -146,7 +147,7 @@ export default [
   {
     path: '/mail',
     meta: {
-      public: true,
+      public: false,
     },
     name: 'Mail',
     component: () => import(
@@ -161,7 +162,7 @@ export default [
       {
         path: '/mail/:mailType',
         meta: {
-          public: true,
+          public: false,
         },
         name: 'MailIndex',
         component: () => import(
@@ -173,7 +174,7 @@ export default [
       {
         path: '/mail/0/:uuid',
         meta: {
-          public: true,
+          public: false,
         },
         name: 'MailDetail',
         component: () => import(
