@@ -3,10 +3,10 @@
     style="position: fixed !important; padding-top: 64px">
     <l-tilelayer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tilelayer>
     <l-control-zoom :position="zoomPosition"/>
-
-      <l-marker v-for="marker in markers" 
-      title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="icon"/>
-
+      <template>
+        <l-marker v-for="marker in markers" 
+        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="icon"/>
+      </template>
   </l-map>
 </template>
 
@@ -70,18 +70,22 @@ export default {
     this.show();
   },
   methods: {
-    getTempSensors () {
+    getTempSensors: async function () {
       let type = 'Sensor_Temp';
-      listByType(type).then(response => {
-        let sensors = [];
-        for (let i = 0; i < response.data.contextResponses.length; i++) {
-          let element = response.data.contextResponses[i];
-          sensors.push(element);
+      let sensors = [];
+      let response = await listByType(type);
+
+      const forEachAsync = async function (array, callback) {
+        for (let i = 0; i < array.length; i++) {
+          await callback(array[i]);
         }
-      }).catch(e => {
-        console.log(e.message);
+      };
+
+      await forEachAsync(response.data.contextResponses, (element) => {
+        sensors.push(element);
       });
 
+      this.sensoresTemp = sensors;
     /*  Sensores.listByType('Sensor_Temp').then(response => {
         self.sensoresTemp = JSON.stringify(response.data.contextResponses);
         return self.sensoresTemp;
