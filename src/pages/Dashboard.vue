@@ -3,12 +3,29 @@
     style="position: fixed !important; padding-top: 64px">
     <l-tilelayer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tilelayer>
     <l-control-zoom :position="zoomPosition"/>
+      <template>
+        <l-marker v-for="marker in markers" 
+        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="icon"/>
+      </template>
   </l-map>
 </template>
 
-<script>
+<style lang="scss">
+  @import '../../dist/static/routing/leaflet-routing-machine.css';
+
+  .leaflet-bottom {
+    position: fixed !important;
+  }
+
+</style>
+
+<script type="text/javascript">
+
 import L from 'leaflet';
 import * as Vue2Leaflet from 'vue2-leaflet';
+import { listByType } from '@/service/sensores';
+import { http } from '@/service/configorion';
+import 'leaflet-routing-machine';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -28,14 +45,79 @@ export default {
   data () {
     return {
       initialLocation: L.latLng(-5.822089, -35.215033),
-      zoomPosition: 'topleft',
+      zoomPosition: 'topright',
+      teste: '',
+      map: null,
       mapOptions: {
         zoomControl: false,
         attributionControl: false,
         measureControl: true,
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-      }
+        // attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      },
+      sensoresTemp: [],
+      markers: [],
+      icon: L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+        iconSize: [30, 32]
+      })
     };
+  },
+  created () {
+    this.getTempSensors();
+    this.show();
+  },
+  mounted: function () {
+    this.$nextTick(() => {
+      this.map = this.$refs.map.mapObject;
+      // Remover após usar o método
+      this.addToMap(
+        [
+          L.latLng(-5.822648, -35.205605),
+          L.latLng(-5.7703142699, -35.255851689699995)
+        ]
+      );
+    });
+  },
+  methods: {
+    getTempSensors: async function () {
+      let type = 'Sensor_Temp';
+      let sensors = [];
+      let response = await listByType(type);
+
+      const forEachAsync = async function (array, callback) {
+        for (let i = 0; i < array.length; i++) {
+          await callback(array[i]);
+        }
+      };
+
+      await forEachAsync(response.data.contextResponses, (element) => {
+        sensors.push(element);
+      });
+
+      this.sensoresTemp = sensors;
+    /*  Sensores.listByType('Sensor_Temp').then(response => {
+        self.sensoresTemp = JSON.stringify(response.data.contextResponses);
+        return self.sensoresTemp;
+      }); */
+    },
+    getPosition () {
+      return new Promise(function (resolve) {
+        navigator.geolocation.getCurrentPosition(function (location) {
+          resolve(location);
+        });
+      });
+    },
+    show (json) {
+      /* console.log('ok');
+      return L.latLng(-5.822089, -35.215033); */
+    },
+    addToMap (array) {
+      L.Routing.control({
+        waypoints: array,
+        position: 'topleft',
+        language: 'pt-BR'
+      }).addTo(this.map);
+    }
   }
 };
 
