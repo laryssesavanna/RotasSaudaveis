@@ -10,12 +10,22 @@
   </l-map>
 </template>
 
+<style lang="scss">
+  @import '../../dist/static/routing/leaflet-routing-machine.css';
+
+  .leaflet-bottom {
+    position: fixed !important;
+  }
+
+</style>
+
 <script type="text/javascript">
 import L from 'leaflet';
 import Vue from 'vue';
 import * as Vue2Leaflet from 'vue2-leaflet';
 import { listByType } from '@/service/sensores';
 import { http } from '@/service/configorion';
+import 'leaflet-routing-machine';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -36,8 +46,9 @@ export default {
   data () {
     return {
       initialLocation: L.latLng(-5.822089, -35.215033),
-      zoomPosition: 'topleft',
+      zoomPosition: 'topright',
       teste: '',
+      map: null,
       mapOptions: {
         zoomControl: false,
         attributionControl: false,
@@ -45,20 +56,7 @@ export default {
         // attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       },
       sensoresTemp: [],
-      markers: [
-        {
-          position: { 
-            lng: -35.205605,
-            lat: -5.822648
-          }
-        },
-        {
-          position: { 
-            lng: -35.255851689699995, 
-            lat: -5.7703142699 
-          }
-        }
-      ],
+      markers: [],
       icon: L.icon({
         iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
         iconSize: [30, 32]
@@ -68,6 +66,18 @@ export default {
   created () {
     this.getTempSensors();
     this.show();
+  },
+  mounted: function () {
+    this.$nextTick(() => {
+      this.map = this.$refs.map.mapObject;
+      // Remover após usar o método
+      this.addToMap(
+        [
+          L.latLng(-5.822648, -35.205605),
+          L.latLng(-5.7703142699, -35.255851689699995)
+        ]
+      );
+    });
   },
   methods: {
     getTempSensors: async function () {
@@ -101,6 +111,13 @@ export default {
     show (json) {
       /* console.log('ok');
       return L.latLng(-5.822089, -35.215033); */
+    },
+    addToMap (array) {
+      L.Routing.control({
+        waypoints: array,
+        position: 'topleft',
+        language: 'pt-BR'
+      }).addTo(this.map);
     }
   }
 };
