@@ -6,4 +6,3 @@ export const listAllEntities = () => http.get('contextEntities');
   
 // Listar todos os sensores por tipo
 export const listByType = (type) => http.get('contextEntityTypes/' + type);
-

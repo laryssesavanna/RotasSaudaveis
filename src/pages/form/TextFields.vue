@@ -13,7 +13,7 @@
                   <v-flex xs8>
                     <v-text-field
                       label="Nome completo"
-                      value="Larysse Savanna Izidio da Silva"
+                      v-model="profile.nome"
                       :rules="[rules.required]"
                     ></v-text-field>
                   </v-flex>
@@ -27,6 +27,7 @@
                       name="input-1"
                       label="Idade"
                       value="23"
+                      v-model="profile.idade"
                       color="primary"
                       id="testing"
                     ></v-text-field>
@@ -39,6 +40,7 @@
                   <v-flex xs8>
                     <v-text-field
                       label="Peso"
+                      v-model="profile.peso"
                       value="63.00"
                       suffix="kg"
                     ></v-text-field>
@@ -52,6 +54,7 @@
                     <v-text-field
                       label="Glicemia"
                       value="70"
+                      v-model="profile.glicemia"
                     ></v-text-field>
                   </v-flex>
                 </v-layout>      
@@ -64,11 +67,13 @@
                         label="Hipertensão"
                         color="red"
                         value="red"
+                        v-model="profile.hipertensao"
                         hide-details
                       ></v-checkbox>
                       <v-checkbox
                         label="Diabetes"
                         color="red"
+                        v-model="profile.diabetes"
                         value="red darken-3"
                         hide-details
                       ></v-checkbox>
@@ -77,12 +82,14 @@
                       <v-checkbox
                         label="Asma"
                         color="orange"
+                        v-model="profile.asma"
                         value="indigo"
                         hide-details
                       ></v-checkbox>
                       <v-checkbox
                         label="Artrite"
                         color="red"
+                        v-model="profile.artrite"
                         value="indigo darken-3"
                         hide-details
                       ></v-checkbox>
@@ -92,17 +99,19 @@
                         label="Gripe inicial"
                         color="orange"
                         value="orange"
+                        v-model="profile.gripe_inicial"
                         hide-details
                       ></v-checkbox>
                       <v-checkbox
                         label="Gripe avançada"
                         color="red"
+                        v-model="profile.gripe_avancada"
                         value="orange darken-3"
                         hide-details
                       ></v-checkbox>
                     </v-flex>
                 </v-layout>
-                <v-btn color="primary">Atualizar</v-btn>
+                <v-btn color="primary" @click="save">Atualizar</v-btn>
                 <v-btn>Cancelar</v-btn>
               </v-container>
             </div>
@@ -115,12 +124,17 @@
 
 <script>
 import VWidget from '@/components/VWidget';
+import fs from 'fs';
+import { getUser, postUser, putUser } from '@/service/users';
+
 export default {
   components: {
     VWidget
   },
   data () {
     return {
+      profile: {},
+      post: false,
       email: '',
       rules: {
         required: (value) => !!value || 'Required.',
@@ -132,8 +146,37 @@ export default {
     };
   },
   computed: {
-  },  
+    user () {
+      return this.$store.getters.conta.user;
+    }
+  },
+  mounted: function () {
+    this.$nextTick(() => {
+      getUser(this.user.id).then((response) => {
+        if (response.status === 204) {
+          this.post = true;
+        } else {
+          this.profile = response.data.data;
+          console.log(this.profile)
+        }
+      });
+    });
+  },
   methods: {
+    save: function () {
+      if (this.post) {
+        this.profile['id'] = this.user.id;
+        postUser(this.profile).then((response) => {
+          console.log(response.data);
+          this.$router.push({ path: '/dashboard'})
+        });
+      } else {
+        putUser(this.user.id, this.profile).then((response) => {
+          console.log(response.data);
+          this.$router.push({ path: '/dashboard'})
+        });
+      }
+    }
   }
 };
 </script>

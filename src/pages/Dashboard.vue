@@ -1,11 +1,16 @@
 <template>
-  <l-map ref="map" :zoom="12" :center="initialLocation" :options="mapOptions" :attribution="attribution"
+  <l-map ref="map" :zoom="12" :center="initialLocation" :options="mapOptions" attribution="attribution"
     style="position: fixed !important; padding-top: 64px">
     <l-tilelayer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tilelayer>
     <l-control-zoom :position="zoomPosition"/>
       <template>
         <l-marker v-for="marker in markers" 
-        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="icon"/>
+        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="getIcon(marker.color)">
+          <l-popup>
+            <div v-html="marker.title">
+            </div>
+          </l-popup>
+        </l-marker>
       </template>
   </l-map>
 </template>
@@ -26,6 +31,7 @@ import * as Vue2Leaflet from 'vue2-leaflet';
 import { listByType } from '@/service/sensores';
 import { http } from '@/service/configorion';
 import 'leaflet-routing-machine';
+import 'leaflet-control-geocoder';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -39,6 +45,7 @@ export default {
   components: {
     'l-map': Vue2Leaflet.LMap,
     'l-tilelayer': Vue2Leaflet.LTileLayer,
+    'l-marker': Vue2Leaflet.LMarker,
     'l-popup': Vue2Leaflet.LPopup,
     'l-control-zoom': Vue2Leaflet.LControlZoom
   },
@@ -52,14 +59,10 @@ export default {
         zoomControl: false,
         attributionControl: false,
         measureControl: true,
-        // attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       },
       sensoresTemp: [],
-      markers: [],
-      icon: L.icon({
-        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-        iconSize: [30, 32]
-      })
+      markers: []
     };
   },
   created () {
@@ -72,17 +75,22 @@ export default {
       // Remover após usar o método
       this.addToMap(
         [
-          L.latLng(-5.822648, -35.205605),
-          L.latLng(-5.7703142699, -35.255851689699995)
+          L.latLng(-5.826648, -35.203605),
+          L.latLng(-5.7603142699, -35.254851689699995)
         ]
       );
     });
   },
   methods: {
     getTempSensors: async function () {
-      let type = 'Sensor_Temp';
+      let temperatureSensor = { name: 'Temperatura', type: 'Sensor_Temp', measured: '°C', color: 'red' };
+      let pollutionSensor = { name: 'Poluição', type: 'Sensor_Poluicao', measured: '%', color: 'black' };
+      await this.getSensors(temperatureSensor);
+      await this.getSensors(pollutionSensor);
+    },
+    getSensors: async function (sensorType) {
       let sensors = [];
-      let response = await listByType(type);
+      let response = await listByType(sensorType.type);
 
       const forEachAsync = async function (array, callback) {
         for (let i = 0; i < array.length; i++) {
@@ -90,15 +98,27 @@ export default {
         }
       };
 
-      await forEachAsync(response.data.contextResponses, (element) => {
+      await forEachAsync(response.data.contextResponses, async (element) => {
+        let lat;
+        let lon;
+        let medicao;
+        console.log(element.contextElement);
+        await forEachAsync(element.contextElement.attributes, async (attr) => {
+          if (attr.name === 'lat') lat = attr.value;
+          if (attr.name === 'lon') lon = attr.value;
+          if (attr.name === 'Medicao') medicao = sensorType.name + ': <b>' + attr.value + '</b> ' + sensorType.measured;
+        });
+        console.log(lat, lon);
+        let point = L.latLng(lat, lon);
+        this.markers.push({ title: medicao, position: point, color: sensorType.color });
         sensors.push(element);
       });
-
       this.sensoresTemp = sensors;
-    /*  Sensores.listByType('Sensor_Temp').then(response => {
-        self.sensoresTemp = JSON.stringify(response.data.contextResponses);
-        return self.sensoresTemp;
-      }); */
+    },
+    getIcon (color) {
+      return L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-' + color + '.png',
+      });
     },
     getPosition () {
       return new Promise(function (resolve) {
@@ -115,7 +135,8 @@ export default {
       L.Routing.control({
         waypoints: array,
         position: 'topleft',
-        language: 'pt-BR'
+        language: 'pt-BR',
+        geocoder: L.Control.Geocoder.nominatim()
       }).addTo(this.map);
     }
   }
