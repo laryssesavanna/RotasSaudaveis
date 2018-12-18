@@ -157,7 +157,6 @@ export default {
           this.post = true;
         } else {
           this.profile = response.data.data;
-          console.log(this.profile)
         }
       });
     });
@@ -168,12 +167,12 @@ export default {
         this.profile['id'] = this.user.id;
         postUser(this.profile).then((response) => {
           console.log(response.data);
-          this.$router.push({ path: '/dashboard'})
+          this.$router.push({ path: '/dashboard' });
         });
       } else {
         putUser(this.user.id, this.profile).then((response) => {
           console.log(response.data);
-          this.$router.push({ path: '/dashboard'})
+          this.$router.push({ path: '/dashboard' });
         });
       }
     }

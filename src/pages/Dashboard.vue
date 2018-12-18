@@ -5,7 +5,7 @@
     <l-control-zoom :position="zoomPosition"/>
       <template>
         <l-marker v-for="marker in markers" 
-        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="getIcon(marker.color)">
+        title="Temperatura" :lat-lng="marker.position" :key="marker.id" :icon="getIcon(marker.color, marker.value)">
           <l-popup>
             <div v-html="marker.title">
             </div>
@@ -20,6 +20,14 @@
 
   .leaflet-bottom {
     position: fixed !important;
+  }
+
+  .my-div-icon {
+    background: orange;
+    border: 2px solid darkorange;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 20px;
   }
 
 </style>
@@ -56,14 +64,25 @@ export default {
       teste: '',
       map: null,
       mapOptions: {
+        minZoom: 12,
         zoomControl: false,
         attributionControl: false,
         measureControl: true,
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       },
+      route: null,
       sensoresTemp: [],
-      markers: []
+      markers: [],
+      sensors: []
     };
+  },
+  watch: {
+    route: function (val) {
+      if (this.route !== null) {
+        console.log(val);
+        this.showingSensorProx();
+      }
+    }
   },
   created () {
     this.getTempSensors();
@@ -79,9 +98,22 @@ export default {
           L.latLng(-5.7603142699, -35.254851689699995)
         ]
       );
+      // this.markers.push({ title: 'Temperatura: <b>' + 31 + '</b> °C', position: L.latLng(-5.826748, -35.209605), color: 'red', value: 31 });
+      // this.markers.push({ title: 'Temperatura: <b>' + 30 + '</b> °C', position: L.latLng(-5.826351, -35.218205), color: 'red', value: 30 });
+      // this.markers.push({ title: 'Temperatura: <b>' + 29 + '</b> °C', position: L.latLng(-5.7303142699, -35.254951689699995), color: 'red', value: 29 });
+      // this.markers.push({ title: 'Temperatura: <b>' + 28 + '</b> °C', position: L.latLng(-5.7103242699, -35.234941689699995), color: 'red', value: 28 });
+      // this.markers.push({ title: 'Temperatura: <b>' + 27 + '</b> °C', position: L.latLng(-5.7203345699, -35.294251689699995), color: 'red', value: 27 });
+      // this.markers.push({ title: 'Temperatura: <b>' + 26 + '</b> °C', position: L.latLng(-5.7304142179, -35.214351689699995), color: 'red', value: 26 });
     });
+    console.log(this.checkDistance(L.latLng(-5.826748, -35.209605), L.latLng(-5.826351, -35.218205)));
   },
   methods: {
+    checkDistance: function (p, q) {
+      let dx   = p.lat - q.lat;
+      let dy   = p.lng - q.lng;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+      return dist;
+    },
     getTempSensors: async function () {
       let temperatureSensor = { name: 'Temperatura', type: 'Sensor_Temp', measured: '°C', color: 'red' };
       let pollutionSensor = { name: 'Poluição', type: 'Sensor_Poluicao', measured: '%', color: 'black' };
@@ -102,22 +134,26 @@ export default {
         let lat;
         let lon;
         let medicao;
-        console.log(element.contextElement);
+        let value;
         await forEachAsync(element.contextElement.attributes, async (attr) => {
           if (attr.name === 'lat') lat = attr.value;
           if (attr.name === 'lon') lon = attr.value;
-          if (attr.name === 'Medicao') medicao = sensorType.name + ': <b>' + attr.value + '</b> ' + sensorType.measured;
+          if (attr.name === 'Temperature') {
+            medicao = sensorType.name + ': <b>' + attr.value + '</b> ' + sensorType.measured;
+            value = attr.value + sensorType.measured;
+          }
         });
-        console.log(lat, lon);
         let point = L.latLng(lat, lon);
-        this.markers.push({ title: medicao, position: point, color: sensorType.color });
+        this.sensors.push({ title: medicao, position: point, color: sensorType.color, value: value });
         sensors.push(element);
       });
-      this.sensoresTemp = sensors;
+      // this.sensoresTemp = sensors;
     },
-    getIcon (color) {
-      return L.icon({
-        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-' + color + '.png',
+    getIcon (color, value) {
+      return L.divIcon({
+        html: value,
+        className: 'my-div-icon',
+        iconSize: [50, 20]
       });
     },
     getPosition () {
@@ -137,7 +173,21 @@ export default {
         position: 'topleft',
         language: 'pt-BR',
         geocoder: L.Control.Geocoder.nominatim()
+      }).on('routeselected', (e) => {
+        this.route = e.route;
       }).addTo(this.map);
+    },
+    showingSensorProx () {
+      this.sensors.forEach((sensor) => {
+        this.route.coordinates.every((point) => {
+          // console.log(this.checkDistance(sensor.position, point));
+          if (this.checkDistance(sensor.position, point) < 0.007) {
+            this.markers.push(sensor);
+            return false;
+          }
+          return true;
+        });
+      });
     }
   }
 };

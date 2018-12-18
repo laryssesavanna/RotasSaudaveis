@@ -17,7 +17,7 @@ module.exports = {
         secure: false
       },
       '/contextEntityTypes': {
-        target: 'http://10.7.40.62:1026/v1',
+        target: 'http://localhost:1026/v1',
         changeOrigin: true,
         secure: false
       }

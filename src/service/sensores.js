@@ -5,4 +5,4 @@ import { http } from './configorion';
 export const listAllEntities = () => http.get('contextEntities');
   
 // Listar todos os sensores por tipo
-export const listByType = (type) => http.get('contextEntityTypes/' + type);
+export const listByType = (type) => http.get('contextEntityTypes/' + type + '?limit=1000&options=count');
